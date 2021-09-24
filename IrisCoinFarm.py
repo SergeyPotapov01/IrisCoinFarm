@@ -1,4 +1,5 @@
 import time
+import datetime
 import threading
 import sqlite3
 
@@ -6,7 +7,7 @@ from random import randint
 
 import vk_api
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 
 class DataBase:
@@ -28,7 +29,7 @@ class DataBase:
         except:
             print('хуй знает что могло пойти не так при создании таблицы')
 
-    def sendTokenToDB(self, token):
+    def sendTokenToDB(self, token: str):
         try:
             with sqlite3.connect('access_token.db') as con:
                 cur = con.cursor()
@@ -49,7 +50,7 @@ class DataBase:
             print('База данных не создана, Сейчас ее создам')
             self.createDB()
 
-    def getTokenAndSendToDB(self, login, password):
+    def getTokenAndSendToDB(self, login: str, password: str ):
         vk_session = vk_api.VkApi(login, password, app_id=2685278)
         vk_session.auth()
         self.sendTokenToDB(vk_session.token['access_token'])
@@ -66,6 +67,7 @@ class DataBase:
 
 
 def irisCoinFarm(*dataBase):
+    time.sleep(5)
     while crutch:
         try:
             for access_token in dataBase:
@@ -74,14 +76,16 @@ def irisCoinFarm(*dataBase):
 
                 vk = vk_api.VkApi(token=access_token)
                 vk = vk.get_api()
+
                 try:
                     vk.wall.createComment(owner_id=-174105461, post_id=6713149, message='Ферма')
                 except vk_api.exceptions.ApiError:
                     dataBase.deleteInvalidToken(access_token)
-                    print('Токен инвалид надо переделать')
+                    print('Токен инвалид надо переделать') # В идеале в бд сохранять логин либо ID что бы отслеживать кто именно инвалид
                 print('токен обработан')
                 time.sleep(10)
             print('Все токены обработанны, ухожу на сон 4 часа')
+            print(datetime.datetime.today())
             time.sleep(60*60*4 + randint(180, 420))
         except:
             print('Случилась какая то хуета я потом распишу эксепшены')
@@ -95,12 +99,18 @@ if __name__ == '__main__':
     tread = threading.Thread(target=irisCoinFarm, args=dataBase.tokens)
     tread.start()
     while True:
-        q = input('Введите цифру:\n 1 - Добавить аккаунт по паролю \n 2 - Закрыть программу ')
+        q = input('Введите цифру:\n 1 - Добавить аккаунт по паролю \n 2 - Добавить токен в БД(если токен инвалид, то его дропнет с бд)\n 3 - Закрыть программу \n')
         if q == '1':
             login = input('Введи логин: ')
-            password = input('Введи пароль')
-            dataBase.getTokenAndSendToDB(login=login, password=password)
+            password = input('Введи пароль: ')
+            try:
+                dataBase.getTokenAndSendToDB(login=login, password=password)
+            except vk_api.exceptions.BadPassword:
+                print('Неверно введен логин либо пароль')
         elif q == '2':
+            token = input('Введи токен: ')
+            dataBase.sendTokenToDB(token)
+        elif q == '3':
             print('Закрытие программы')
             crutch = False
             break
