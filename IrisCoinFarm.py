@@ -5,9 +5,10 @@ import sqlite3
 
 from random import randint
 
+import requests
 import vk_api
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 
 class DataBase:
@@ -23,7 +24,8 @@ class DataBase:
                 cur = con.cursor()
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS access_tokens(
-                    access_token MESSAGE_TEXT PRIMARY KEY 
+                    access_token TEXT,
+                    id INTEGER PRIMARY KEY  NOT NULL,
                     )
                 """)
         except:
@@ -31,13 +33,18 @@ class DataBase:
 
     def sendTokenToDB(self, token: str):
         try:
+            vk = vk_api.VkApi(token=token)
+            vk = vk.get_api()
+            id = str(vk.users.get()[0]['id'])
             with sqlite3.connect('access_token.db') as con:
                 cur = con.cursor()
-                cur.execute('INSERT INTO access_tokens(access_token) VALUES ("{0}")'.format(token))
+                cur.execute(f'INSERT INTO access_tokens(access_token, id) VALUES ("{token}", {id})')
                 con.commit()
             self._addToken(token)
         except sqlite3.IntegrityError:
             print('Повторно введены данные к одному аккаунту')
+        except requests.exceptions.ConnectionError:
+            print('Проблема с тынтырнетом')
 
     def loadDB(self):
         try:
@@ -45,7 +52,7 @@ class DataBase:
                 cur = con.cursor()
                 z = cur.execute('SELECT access_token FROM access_tokens')
                 for token in z:
-                    self.tokens.append(token)
+                    self.tokens.append(token[0])
         except sqlite3.OperationalError:
             print('База данных не создана, Сейчас ее создам')
             self.createDB()
@@ -59,17 +66,17 @@ class DataBase:
         try:
             with sqlite3.connect('access_token.db') as con:
                 cur = con.cursor()
-                cur.execute('DELETE FROM access_tokens WHERE access_token="{0}"'.format(token))
+                cur.execute(f'DELETE FROM access_tokens WHERE access_token="{token}"')
                 con.commit()
             self.tokens.remove(token)
         except:
             print('А хуй знает что могло пойти не так при удалении инвалид токена из бд')
 
 
-def irisCoinFarm(*dataBase):
+def irisCoinFarm(*dataBase: str):
     time.sleep(5)
     while crutch:
-        try:
+        if True:
             for access_token in dataBase:
                 if access_token == 0:
                     continue # кароче ебать баг если только один токен в массиве, то он итерируется по токену, а не по массиву оставлю это как костыль
@@ -79,18 +86,17 @@ def irisCoinFarm(*dataBase):
 
                 try:
                     vk.wall.createComment(owner_id=-174105461, post_id=6713149, message='Ферма')
+                    id = str(vk.users.get()[0]['id'])
+                    print(f'Комментарий на фарм создан с id{id} в ' +str(datetime.datetime.today()))
                 except vk_api.exceptions.ApiError:
                     dataBase.deleteInvalidToken(access_token)
-                    print('Токен инвалид надо переделать') # В идеале в бд сохранять логин либо ID что бы отслеживать кто именно инвалид
-                print('токен обработан')
+                    print(f'Токен инвалид надо переделать{access_token}')
+                except requests.exceptions.ConnectionError:
+                    print('Проблема с тынтырнетом надо будет это переписать, а то как не кайф')
                 time.sleep(10)
-            print('Все токены обработанны, ухожу на сон 4 часа')
+            print('Все токены обработанны, ухожу на сон 4 часа') # перепишу под асинхрон что бы каждый токен сам засыпал на 4 часа
             print(datetime.datetime.today())
             time.sleep(60*60*4 + randint(180, 420))
-        except:
-            print('Случилась какая то хуета я потом распишу эксепшены')
-            time.sleep(1)
-
 
 if __name__ == '__main__':
     crutch = True
