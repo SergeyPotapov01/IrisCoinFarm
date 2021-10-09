@@ -1,8 +1,11 @@
 # IrisCoinFarm
 
 Установка зависимостей: 
+
 pip install vk_api==11.9.4
+
 pip install loguru==0.5.3
+
 
 Бот для фарма Ирискоинов для Чат-менеджера Iris Вконтакте
 
