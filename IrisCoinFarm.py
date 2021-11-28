@@ -49,9 +49,10 @@ async def asyncIrisCoinFarm(dataBase: DataBase):
 
 async def asyncUX(loop):
     while True:
-        enteredQuery = await loop.run_in_executor(None, input, 'Введите цифру:\n 1 - Добавить аккаунт по паролю \n 2 - Добавить токен в БД(если токен инвалид, то его дропнет с бд)\n 3 - Показать аккаунты загруженные в бд \n 4 - Перезагрузить бота \n 5 - Закрыть программу \n')
+        enteredQuery = await loop.run_in_executor(None, input, 'Введите цифру:\n 1 - Добавить аккаунт по паролю (отключили данную функцию) \n 2 - Добавить токен в БД(если токен инвалид, то его дропнет с бд)\n 3 - Показать аккаунты загруженные в бд \n 4 - Перезагрузить бота \n 5 - Закрыть программу \n')
 
         if enteredQuery == '1':
+            continue
             login = input('Введи логин: ')
             password = input('Введи пароль: ')
             access_token = dataBase.getTokenAndSendToDB(login=login, password=password)
