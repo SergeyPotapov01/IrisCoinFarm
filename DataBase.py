@@ -87,7 +87,7 @@ class DataBase:
                 con.commit()
             self.tokens.remove(token)
         except:
-            logger.error('А хуй знает что могло пойти не так при удалении инвалид токена из бд')
+            logger.error('Проблема с удаленим токена в бд')
 
     def sendID(self):
         try:
